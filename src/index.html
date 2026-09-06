@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; frame-src rom-room://player; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    >
+    <title>ROM Room</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand drag-region" aria-label="ROM Room">
+          <span class="brand-mark" aria-hidden="true">
+            <i></i><i></i><i></i><i></i>
+          </span>
+          <span>ROM ROOM</span>
+        </div>
+
+        <div class="library-heading">
+          <div>
+            <p class="eyebrow">Your collection</p>
+            <h1>Library</h1>
+          </div>
+          <span id="libraryCount" class="count-badge">0</span>
+        </div>
+
+        <div id="libraryEmpty" class="library-empty">
+          <div class="empty-cart" aria-hidden="true">◇</div>
+          <p>Your recent games will live here.</p>
+        </div>
+        <ol id="libraryList" class="library-list" aria-label="Recent games"></ol>
+
+        <div class="sidebar-footer">
+          <div class="runtime-status">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span>
+              <strong>EmulatorJS</strong>
+              <small>Stable runtime</small>
+            </span>
+          </div>
+          <p>ROMs stay on this device.</p>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="toolbar drag-region">
+          <div class="console-field no-drag">
+            <label for="systemSelect">Console</label>
+            <div class="select-wrap">
+              <select id="systemSelect" aria-label="Emulator console">
+                <option value="">Auto-detect</option>
+              </select>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+            </div>
+          </div>
+          <div class="toolbar-actions no-drag">
+            <button id="biosButton" class="button button-quiet" type="button" title="Choose optional console firmware">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3v3m6-3v3M9 18v3m6-3v3M3 9h3m-3 6h3m12-6h3m-3 6h3M7 7h10v10H7z"/></svg>
+              <span>BIOS</span>
+            </button>
+            <button id="openButton" class="button button-primary" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14m-7-7h14"/></svg>
+              Open ROM
+              <kbd>⌘O</kbd>
+            </button>
+          </div>
+        </header>
+
+        <section class="workspace" aria-live="polite">
+          <div id="screenShell" class="screen-shell is-idle">
+            <div class="screen-chrome" aria-hidden="true">
+              <div class="screen-label"><span></span> READY</div>
+              <div class="speaker-slots"><i></i><i></i><i></i><i></i><i></i></div>
+            </div>
+
+            <div id="dropTarget" class="screen-surface">
+              <iframe
+                id="playerFrame"
+                title="EmulatorJS player"
+                allow="autoplay; fullscreen; gamepad; screen-wake-lock"
+                allowfullscreen
+                sandbox="allow-scripts allow-same-origin allow-forms allow-downloads allow-pointer-lock"
+                hidden
+              ></iframe>
+
+              <div id="idleState" class="idle-state">
+                <div class="pixel-orbit" aria-hidden="true">
+                  <span class="orbit orbit-one"></span>
+                  <span class="orbit orbit-two"></span>
+                  <div class="cartridge">
+                    <div class="cartridge-ridge"></div>
+                    <div class="cartridge-label">
+                      <span></span><span></span><span></span>
+                    </div>
+                    <div class="cartridge-teeth"></div>
+                  </div>
+                </div>
+                <p class="eyebrow accent">Insert a game</p>
+                <h2>Your games.<br>Your screen.</h2>
+                <p class="idle-copy">Drop a ROM here or choose one from your computer. We’ll match it to the right console.</p>
+                <button id="emptyOpenButton" class="button button-primary button-large" type="button">
+                  Choose a ROM
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+                <p class="drop-hint">or drag &amp; drop anywhere</p>
+              </div>
+
+              <div id="loadingState" class="loading-state" hidden>
+                <div class="loader-pixels" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+                <p class="eyebrow accent">Powering on</p>
+                <h2 id="loadingTitle">Loading game…</h2>
+                <p id="loadingMessage">Preparing the EmulatorJS runtime</p>
+              </div>
+
+              <div id="errorState" class="error-state" hidden>
+                <div class="error-icon" aria-hidden="true">!</div>
+                <p class="eyebrow">Couldn’t start the game</p>
+                <h2 id="errorTitle">Something went wrong.</h2>
+                <p id="errorMessage">Check your connection and try again.</p>
+                <div class="error-actions">
+                  <button id="retryButton" class="button button-primary" type="button">Try again</button>
+                  <button id="dismissErrorButton" class="button button-quiet" type="button">Back to library</button>
+                </div>
+              </div>
+
+              <div id="dropOverlay" class="drop-overlay" hidden>
+                <div class="drop-overlay-icon" aria-hidden="true">↓</div>
+                <h2>Drop to play</h2>
+                <p>We’ll add it to your library.</p>
+              </div>
+            </div>
+          </div>
+
+          <div id="nowPlaying" class="now-playing" hidden>
+            <div class="now-playing-art" aria-hidden="true"><span></span></div>
+            <div class="now-playing-copy">
+              <p class="eyebrow">Now playing</p>
+              <h2 id="nowPlayingTitle">—</h2>
+            </div>
+            <span id="nowPlayingSystem" class="system-chip">—</span>
+            <div class="now-playing-spacer"></div>
+            <button id="stopButton" class="icon-button" type="button" title="Close game" aria-label="Close game">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+            </button>
+          </div>
+
+          <div class="legal-note">
+            <span>Use only ROMs and BIOS files you are legally permitted to use.</span>
+            <span class="key-help"><kbd>Esc</kbd> leaves fullscreen</span>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="consoleDialog" class="console-dialog">
+      <form method="dialog">
+        <button class="dialog-close" value="cancel" aria-label="Close" type="submit">×</button>
+        <p class="eyebrow accent">One quick choice</p>
+        <h2>Which console is this for?</h2>
+        <p id="consoleDialogFile" class="dialog-file">The file type is shared by several systems.</p>
+        <label for="dialogSystemSelect">Console</label>
+        <div class="select-wrap dialog-select">
+          <select id="dialogSystemSelect" required></select>
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+        </div>
+        <menu>
+          <button class="button button-quiet" value="cancel" type="submit">Not now</button>
+          <button id="dialogLaunchButton" class="button button-primary" value="launch" type="submit">Launch game</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="systems.js"></script>
+    <script src="renderer.js"></script>
+  </body>
+</html>

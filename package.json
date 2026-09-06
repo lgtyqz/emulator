@@ -1,0 +1,43 @@
+{
+  "name": "rom-room",
+  "version": "1.0.0",
+  "description": "A focused Electron launcher for local ROMs powered by EmulatorJS.",
+  "main": "main.js",
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "start": "node scripts/start.js",
+    "dev": "node scripts/start.js --dev",
+    "test": "node --test",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^40.8.0",
+    "electron-builder": "26.0.12"
+  },
+  "build": {
+    "appId": "com.romroom.app",
+    "productName": "ROM Room",
+    "asar": true,
+    "files": [
+      "main.js",
+      "preload.js",
+      "scripts/start.js",
+      "src/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.games"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Game"
+    }
+  }
+}
