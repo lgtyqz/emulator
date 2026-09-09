@@ -58,6 +58,10 @@
             </div>
           </div>
           <div class="toolbar-actions no-drag">
+            <button id="netplayButton" class="button button-quiet" type="button" title="Host or join an online multiplayer session">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>
+              <span>NetPlay</span>
+            </button>
             <button id="biosButton" class="button button-quiet" type="button" title="Choose optional console firmware">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3v3m6-3v3M9 18v3m6-3v3M3 9h3m-3 6h3m12-6h3m-3 6h3M7 7h10v10H7z"/></svg>
               <span>BIOS</span>
@@ -172,6 +176,69 @@
           <button id="dialogLaunchButton" class="button button-primary" value="launch" type="submit">Launch game</button>
         </menu>
       </form>
+    </dialog>
+
+    <dialog id="netplayDialog" class="console-dialog netplay-dialog">
+      <div class="netplay-dialog-body">
+        <button id="netplayCloseButton" class="dialog-close" aria-label="Close" type="button">×</button>
+        <p class="eyebrow accent">Experimental multiplayer</p>
+        <h2>NetPlay</h2>
+        <p class="dialog-file">Play through EmulatorJS WebRTC. Every player needs ROM Room and an exact local copy of the same ROM.</p>
+
+        <div class="netplay-tabs" role="tablist" aria-label="NetPlay action">
+          <button id="netplayHostTab" class="netplay-tab is-active" type="button" role="tab" aria-selected="true">Host</button>
+          <button id="netplayJoinTab" class="netplay-tab" type="button" role="tab" aria-selected="false">Join</button>
+        </div>
+
+        <section id="netplayHostPanel" class="netplay-panel" role="tabpanel">
+          <div class="netplay-game-summary">
+            <span>Game</span>
+            <strong id="netplayHostGame">Launch a game first</strong>
+          </div>
+          <fieldset class="netplay-reach">
+            <legend>Who are you playing with?</legend>
+            <label>
+              <input type="radio" name="netplayReach" value="lan" checked>
+              <span><strong>Same network</strong><small>Direct, encrypted LAN connection</small></span>
+            </label>
+            <label>
+              <input type="radio" name="netplayReach" value="internet">
+              <span><strong>Over the internet</strong><small>Temporary Cloudflare Quick Tunnel</small></span>
+            </label>
+          </fieldset>
+          <label id="netplayCloudflareConsentWrap" class="netplay-consent" hidden>
+            <input id="netplayCloudflareConsent" type="checkbox">
+            <span>I understand that signaling uses Cloudflare under its terms and privacy policy. Quick Tunnels have no uptime guarantee, and encrypted WebRTC media may traverse EmulatorJS’s documented public TURN relay.</span>
+          </label>
+          <button id="netplayStartHostButton" class="button button-primary button-block" type="button">Start hosting</button>
+
+          <div id="netplayHostSession" class="netplay-session" hidden>
+            <div class="netplay-status-line">
+              <span id="netplayStatusDot" class="status-dot" aria-hidden="true"></span>
+              <strong id="netplayStatusText">Preparing NetPlay…</strong>
+            </div>
+            <p id="netplayNextStep" class="netplay-next-step">In the player, open the globe menu and create a password-protected room. Then send one invitation below. Invitations never contain the ROM or BIOS.</p>
+            <div id="netplayEndpoints" class="netplay-endpoints"></div>
+            <button id="netplayRetryButton" class="button button-primary button-block" type="button" hidden>Retry internet hosting</button>
+            <button id="netplayStopButton" class="button button-quiet button-block" type="button">Stop sharing</button>
+          </div>
+        </section>
+
+        <section id="netplayJoinPanel" class="netplay-panel" role="tabpanel" hidden>
+          <label for="netplayInviteInput">Invitation link or code</label>
+          <textarea id="netplayInviteInput" rows="4" spellcheck="false" placeholder="rom-room://join?code=… or RR1.…"></textarea>
+          <button id="netplayCheckInviteButton" class="button button-primary button-block" type="button">Check invitation</button>
+          <div id="netplayInvitePreview" class="netplay-invite-preview" hidden>
+            <span id="netplayInviteConnection" class="system-chip">—</span>
+            <strong id="netplayInviteGame">—</strong>
+            <small id="netplayInviteMatch">Choose your local ROM.</small>
+            <button id="netplayChooseRomButton" class="button button-quiet button-block" type="button">Choose matching ROM</button>
+            <button id="netplayJoinButton" class="button button-primary button-block" type="button" disabled>Launch NetPlay</button>
+          </div>
+        </section>
+
+        <p id="netplayDialogError" class="netplay-dialog-error" role="alert" hidden></p>
+      </div>
     </dialog>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>

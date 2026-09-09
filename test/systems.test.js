@@ -50,6 +50,16 @@ test('configures Nintendo 3DS to use EmulatorJS threaded WebAssembly', () => {
   assert.match(playerSource, /EJS_threads = requiresThreads/);
 });
 
+test('provides mapped controls for two local players', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const playerSource = fs.readFileSync(path.resolve(__dirname, '../src/player.js'), 'utf8');
+
+  assert.match(playerSource, /EJS_defaultControls = \{/);
+  assert.match(playerSource, /1: createPlayerControls\(playerTwoKeyboard\)/);
+  assert.match(playerSource, /keyboardInput: 'disabled'/);
+});
+
 test('turns a ROM filename into a readable title', () => {
   assert.equal(titleFromFile('/roms/The_Legend.of.Zelda.nes'), 'The Legend of Zelda');
   assert.equal(titleFromFile('game'), 'game');

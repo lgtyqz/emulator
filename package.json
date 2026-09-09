@@ -5,39 +5,71 @@
   "main": "main.js",
   "author": "",
   "license": "MIT",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
+    "prepare:netplay": "node scripts/prepare-cloudflared.js",
+    "prestart": "npm run prepare:netplay",
     "start": "node scripts/start.js",
+    "predev": "npm run prepare:netplay",
     "dev": "node scripts/start.js --dev",
     "test": "node --test",
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "pack": "node scripts/package.js --dir",
+    "dist": "node scripts/package.js"
   },
   "devDependencies": {
-    "electron": "^40.8.0",
-    "electron-builder": "26.0.12"
+    "electron": "^41.10.7",
+    "electron-builder": "^26.15.3",
+    "socket.io-client": "^4.8.1",
+    "tar": "^7.5.22"
   },
   "build": {
     "appId": "com.romroom.app",
     "productName": "ROM Room",
     "asar": true,
+    "beforePack": "./scripts/before-pack.js",
+    "protocols": {
+      "name": "ROM Room NetPlay invitation",
+      "schemes": [
+        "rom-room"
+      ]
+    },
     "files": [
       "main.js",
       "preload.js",
       "scripts/start.js",
       "src/**/*",
+      "THIRD_PARTY_NOTICES.md",
       "package.json"
     ],
     "mac": {
-      "category": "public.app-category.games"
+      "category": "public.app-category.games",
+      "extraResources": {
+        "from": ".cache/cloudflared/darwin-${arch}/cloudflared",
+        "to": "cloudflared/cloudflared"
+      }
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "extraResources": {
+        "from": ".cache/cloudflared/win32-${arch}/cloudflared.exe",
+        "to": "cloudflared/cloudflared.exe"
+      }
     },
     "linux": {
       "target": [
         "AppImage"
       ],
-      "category": "Game"
+      "category": "Game",
+      "extraResources": {
+        "from": ".cache/cloudflared/linux-${arch}/cloudflared",
+        "to": "cloudflared/cloudflared"
+      }
     }
+  },
+  "dependencies": {
+    "selfsigned": "^3.0.1",
+    "socket.io": "^4.8.1"
   }
 }
