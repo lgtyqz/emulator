@@ -54,6 +54,7 @@ test('queues cold- and warm-start deep links and pins only invited LAN certifica
 
   assert.match(mainSource, /app\.on\('second-instance'/);
   assert.match(mainSource, /app\.on\('open-url'/);
+  assert.match(mainSource, /PORTABLE_EXECUTABLE_FILE[\s\S]*setAsDefaultProtocolClient/);
   assert.match(mainSource, /did-finish-load[\s\S]*pendingDeepLink/);
   assert.match(mainSource, /certificateIsTrusted[\s\S]*certificateFingerprintFromData\(certificate\?\.data\)/);
   assert.match(mainSource, /setCertificateVerifyProc[\s\S]*certificateIsTrusted\(request\.hostname, request\.certificate\)[\s\S]*\? 0 : -3/);

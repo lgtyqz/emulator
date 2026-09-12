@@ -27,6 +27,7 @@
   "build": {
     "appId": "com.romroom.app",
     "productName": "ROM Room",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "asar": true,
     "beforePack": "./scripts/before-pack.js",
     "protocols": {
@@ -44,6 +45,7 @@
       "package.json"
     ],
     "mac": {
+      "target": "zip",
       "category": "public.app-category.games",
       "extraResources": {
         "from": ".cache/cloudflared/darwin-${arch}/cloudflared",
@@ -51,7 +53,7 @@
       }
     },
     "win": {
-      "target": "nsis",
+      "target": "portable",
       "extraResources": {
         "from": ".cache/cloudflared/win32-${arch}/cloudflared.exe",
         "to": "cloudflared/cloudflared.exe"

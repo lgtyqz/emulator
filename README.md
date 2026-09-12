@@ -24,7 +24,7 @@ The EmulatorJS runtime is loaded from its stable CDN the first time a core is us
 - Persistent recent-game library
 - Optional per-launch BIOS selection
 - Isolated EmulatorJS player that can be replaced without reloading the app
-- Packaging commands for macOS, Windows, and Linux
+- Portable distribution builds for macOS, Windows, and Linux
 
 ## Commands
 
@@ -33,8 +33,10 @@ npm start       # launch the app
 npm test        # run unit, signaling, tunnel, and console-detection tests
 npm run prepare:netplay # fetch and verify cloudflared for this computer
 npm run pack    # create an unpacked application
-npm run dist    # create a platform installer
+npm run dist    # create a portable artifact for the current platform
 ```
+
+Portable builds are emitted to `dist/`: a ZIP containing the app bundle on macOS, a single portable executable on Windows, and an AppImage on Linux. No installer is created. Windows NetPlay invitation links follow the current location of the portable executable; launch the app once again after moving it to refresh that association.
 
 ## ROMs and BIOS files
 

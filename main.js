@@ -813,6 +813,10 @@ app.whenReady().then(async () => {
   if (!hasInstanceLock) return;
   if (process.defaultApp && process.argv[1]) {
     app.setAsDefaultProtocolClient(APP_SCHEME, process.execPath, [path.resolve(process.argv[1])]);
+  } else if (process.platform === 'win32' && process.env.PORTABLE_EXECUTABLE_FILE) {
+    // The portable wrapper extracts Electron to a temporary directory. Register
+    // the stable outer executable so invitation links survive that cleanup.
+    app.setAsDefaultProtocolClient(APP_SCHEME, process.env.PORTABLE_EXECUTABLE_FILE);
   } else {
     app.setAsDefaultProtocolClient(APP_SCHEME);
   }
