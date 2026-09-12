@@ -498,8 +498,8 @@
       elements.netplayRetryButton.hidden = !internetUnavailable;
       elements.netplayStopButton.textContent = hosting ? 'Stop sharing' : 'Leave NetPlay';
       elements.netplayNextStep.textContent = hosting
-        ? 'In the player, open the globe menu and create a password-protected room. Then send one invitation below. Invitations never contain the ROM or BIOS.'
-        : 'In the player, open the globe menu, set your name, and choose the host’s room. Your ROM and BIOS remain on this device.';
+        ? 'The player creates a protected room automatically. Send one invitation below. Invitations never contain the ROM or BIOS.'
+        : 'The player joins automatically with new invitations. For older invitations, use the globe menu to join the host’s room. Your ROM and BIOS remain on this device.';
     }
   }
 

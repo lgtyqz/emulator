@@ -125,6 +125,11 @@ function normalizeInvite(payload) {
     throw new Error('LAN invitations must identify the host certificate.');
   }
 
+  const roomPassword = payload.roomPassword;
+  if (roomPassword !== undefined && (typeof roomPassword !== 'string' || !/^[A-Za-z0-9_-]{20}$/.test(roomPassword))) {
+    throw new Error('The invitation contains an invalid room password.');
+  }
+
   return {
     v: INVITE_VERSION,
     serverUrl: validateServerUrl(payload.serverUrl),
@@ -133,6 +138,7 @@ function normalizeInvite(payload) {
     core,
     gameName,
     connection,
+    ...(roomPassword ? { roomPassword } : {}),
     ...(certificateFingerprint ? { certificateFingerprint } : {})
   };
 }

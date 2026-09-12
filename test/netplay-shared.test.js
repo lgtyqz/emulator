@@ -48,6 +48,15 @@ test('derives a deterministic safe integer from the first twelve hash digits', (
   assert.throws(() => netplayGameId('short'), /fingerprint/);
 });
 
+test('preserves automatic-room credentials and accepts older manual invitations', () => {
+  const payload = invitation({ roomPassword: 'abcdefghijklmnopqrst' });
+  assert.deepEqual(decodeInvite(encodeInvite(payload)), payload);
+  assert.equal(decodeInvite(encodeInvite(invitation())).roomPassword, undefined);
+  for (const roomPassword of ['', 'short', 'a'.repeat(21), ' '.repeat(20), null, 123]) {
+    assert.throws(() => encodeInvite(invitation({ roomPassword })), /room password/);
+  }
+});
+
 test('rejects malformed, oversized, and internally inconsistent invitations', () => {
   assert.throws(() => decodeInvite('RR1.not-json'), /corrupted/);
   assert.throws(() => decodeInvite('x'.repeat(MAX_INVITE_LENGTH + 1)), /too large/);

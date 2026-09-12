@@ -405,6 +405,7 @@ async function hostNetplay(gameId, reach) {
   const localServerUrl = `https://127.0.0.1:${port}`;
   const baseInvite = {
     v: 1,
+    roomPassword: crypto.randomBytes(15).toString('base64url'),
     gameHash,
     gameId: ejsGameId,
     core,
@@ -427,6 +428,7 @@ async function hostNetplay(gameId, reach) {
     gameHash,
     ejsGameId,
     netplayServer: localServerUrl,
+    roomPassword: baseInvite.roomPassword,
     iceServers: reach === 'internet' ? INTERNET_ICE_SERVERS : [],
     endpoints,
     server,
@@ -531,6 +533,7 @@ async function joinNetplay(inviteId, gameId) {
     gameHash,
     ejsGameId: invite.gameId,
     netplayServer: invite.serverUrl,
+    roomPassword: invite.roomPassword || '',
     iceServers: invite.connection === 'internet' ? INTERNET_ICE_SERVERS : [],
     endpoints: [],
     server: null,
@@ -539,7 +542,9 @@ async function joinNetplay(inviteId, gameId) {
     status: null
   };
   pendingInvites.delete(inviteId);
-  emitNetplayStatus('ready', 'Invitation verified. Open the globe menu after the game starts.');
+  emitNetplayStatus('ready', invite.roomPassword
+    ? 'Invitation verified. The player will join the host automatically.'
+    : 'Older invitation: open the globe menu and join the host’s room.');
   return publicNetplaySession();
 }
 
@@ -584,6 +589,8 @@ function setupIpc() {
         ? 'https://cdn.emulatorjs.org/4.3.0-pre/data/'
         : 'https://cdn.emulatorjs.org/4.2.3/data/',
       netplayServer: netplayConfig?.netplayServer || '',
+      netplayRole: netplayConfig?.role || '',
+      roomPassword: netplayConfig?.roomPassword || '',
       iceServers: netplayConfig?.iceServers || []
     });
     return {
@@ -625,7 +632,7 @@ function safeRendererPath(requestUrl) {
   }
 
   const requested = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
-  if (url.host === 'player' && !['player.html', 'player.js', 'player.css'].includes(requested)) {
+  if (url.host === 'player' && !['player.html', 'player.js', 'player.css', 'player-netplay.js'].includes(requested)) {
     return null;
   }
   const resolved = path.resolve(rendererRoot, requested);

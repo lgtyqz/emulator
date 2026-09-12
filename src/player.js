@@ -162,7 +162,12 @@
     window.EJS_netplayICEServers = iceServers;
   }
   window.EJS_ready = () => notify('ready');
-  window.EJS_onGameStart = () => notify('started');
+  window.EJS_onGameStart = () => {
+    notify('started');
+    if (netplayServer && config.roomPassword) {
+      window.romRoomNetplay(window.EJS_emulator, config, fail);
+    }
+  };
   window.EJS_onExit = () => notify('exit');
 
   window.addEventListener('error', (event) => {
