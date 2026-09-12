@@ -38,7 +38,7 @@ function setup(role) {
     clearTimeout: (id) => timers.delete(id)
   });
   return {
-    emu, netplay, calls, errors, messages, events, timers,
+    emu, netplay, calls, errors, messages, events, timers, window,
     async start() {
       window.romRoomNetplay(emu, { netplayRole: role, roomPassword: 'abcdefghijklmnopqrst' }, (error) => errors.push(error));
       await Promise.resolve();
@@ -203,4 +203,44 @@ test('late audio context adds an audio track and renegotiates existing video pee
   assert.deepEqual(tracks, [audio.track]);
   assert.equal(closed, 1);
   assert.equal(created, 1);
+});
+
+test('captures private RWebAudio buffers that bypass the unused OpenAL backend', async () => {
+  const app = setup('host');
+  const audio = audioContext();
+  audio.context.destination = {};
+  class AudioNode {
+    constructor() { this.context = audio.context; this.connections = []; }
+    connect(output) { this.connections.push(output); return output; }
+  }
+  app.window.AudioNode = AudioNode;
+  const originalConnect = AudioNode.prototype.connect;
+  app.emu.Module = { AL: { currentCtx: null } };
+  await app.start();
+  for (let index = 0; index < 10; index++) {
+    const buffer = new AudioNode();
+    assert.equal(buffer.connect(audio.context.destination), audio.context.destination);
+    assert.deepEqual(buffer.connections, [audio.context.destination, audio.destination]);
+    assert.equal(app.netplay._captureHostAudio(), audio.destination.stream);
+  }
+  app.events.pagehide();
+  assert.equal(AudioNode.prototype.connect, originalConnect);
+  assert.equal(audio.track.stopCount, 1);
+});
+
+test('does not double-capture speaker connections from the known OpenAL context', async () => {
+  const app = setup('host');
+  const audio = audioContext();
+  audio.context.destination = {};
+  class AudioNode {
+    constructor() { this.context = audio.context; this.connections = []; }
+    connect(output) { this.connections.push(output); return output; }
+  }
+  app.window.AudioNode = AudioNode;
+  app.emu.Module = { AL: { currentCtx: { audioCtx: audio.context, sources: [] } } };
+  await app.start();
+  const source = new AudioNode();
+  source.connect(audio.context.destination);
+  assert.deepEqual(source.connections, [audio.context.destination]);
+  app.events.pagehide();
 });

@@ -7,6 +7,27 @@
     let destination;
     let sources = new Set();
     let resuming = false;
+    const directOutputs = new Map();
+    const nodePrototype = window.AudioNode?.prototype;
+    const originalConnect = nodePrototype?.connect;
+
+    function connect(output, ...args) {
+      const result = originalConnect.call(this, output, ...args);
+      const al = (emu.Module || emu.gameManager?.Module)?.AL?.currentCtx;
+      const knownContext = al?.audioCtx || emu.gameManager?.audioNode?.context || emu.gameManager?.audioContext;
+      // Modern N64 cores use a private RWebAudio context, not Module.AL.
+      // Capture their short-lived buffers as they connect to the speakers.
+      if (output === this.context.destination && this.context !== knownContext) {
+        let tap = directOutputs.get(this.context);
+        if (!tap) {
+          tap = this.context.createMediaStreamDestination();
+          directOutputs.set(this.context, tap);
+        }
+        originalConnect.call(this, tap, args[0] || 0, 0);
+      }
+      return result;
+    }
+    if (originalConnect) nodePrototype.connect = connect;
 
     function disconnect() {
       for (const source of sources) {
@@ -20,6 +41,11 @@
     }
 
     function capture() {
+      for (const [audioContext, tap] of directOutputs) {
+        if (audioContext.state !== 'closed') return tap.stream;
+        for (const track of tap.stream.getTracks()) track.stop();
+        directOutputs.delete(audioContext);
+      }
       const al = (emu.Module || emu.gameManager?.Module)?.AL?.currentCtx;
       // Prefer the final mixer when available; tapping it and its inputs would
       // double the volume. OpenAL cores expose per-source gain nodes instead.
@@ -75,6 +101,11 @@
       },
       dispose() {
         disconnect();
+        if (nodePrototype?.connect === connect) nodePrototype.connect = originalConnect;
+        for (const tap of directOutputs.values()) {
+          for (const track of tap.stream.getTracks()) track.stop();
+        }
+        directOutputs.clear();
         netplay._captureHostAudio = originalCapture;
       }
     };
