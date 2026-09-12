@@ -134,3 +134,73 @@ test('room discovery cannot stall the connection deadline', async () => {
   assert.match(app.errors[0], /could not connect/);
   assert.equal(app.timers.size, 0);
 });
+
+function audioContext() {
+  const track = { stopCount: 0, stop() { this.stopCount++; } };
+  const destination = { stream: { getTracks: () => [track], getAudioTracks: () => [track] } };
+  const context = { state: 'running', createMediaStreamDestination: () => destination };
+  const makeSource = () => ({
+    context, connections: new Set(),
+    connect(node) { this.connections.add(node); },
+    disconnect(node) { this.connections.delete(node); }
+  });
+  return { context, destination, track, makeSource };
+}
+
+test('host captures late OpenAL sources without interrupting local audio', async () => {
+  const app = setup('host');
+  const audio = audioContext();
+  const localOutput = {};
+  app.emu.Module = { AL: { currentCtx: { audioCtx: audio.context, sources: [] } } };
+  await app.start();
+  const stream = app.netplay._captureHostAudio();
+  const source = audio.makeSource();
+  source.connect(localOutput);
+  app.emu.Module.AL.currentCtx.sources.push({ gain: source });
+  await app.tick();
+  assert.equal(app.netplay._captureHostAudio(), stream);
+  assert.deepEqual([...source.connections], [localOutput, audio.destination]);
+  await app.tick();
+  assert.equal(source.connections.size, 2);
+  app.events.pagehide();
+  assert.deepEqual([...source.connections], [localOutput]);
+  assert.equal(audio.track.stopCount, 1);
+});
+
+test('audio source replacement disconnects obsolete capture taps', async () => {
+  const app = setup('host');
+  const audio = audioContext();
+  const first = audio.makeSource();
+  const second = audio.makeSource();
+  const al = { audioCtx: audio.context, sources: [{ gain: first }] };
+  app.emu.Module = { AL: { currentCtx: al } };
+  await app.start();
+  al.sources = [{ gain: second }];
+  await app.tick();
+  assert.equal(first.connections.size, 0);
+  assert.ok(second.connections.has(audio.destination));
+});
+
+test('late audio context adds an audio track and renegotiates existing video peers once', async () => {
+  const app = setup('host');
+  const tracks = [];
+  app.netplay.localStream = {
+    getAudioTracks: () => tracks,
+    addTrack: (track) => tracks.push(track)
+  };
+  let closed = 0;
+  let created = 0;
+  app.netplay.peerConnections.guest = { pc: { close: () => closed++ } };
+  app.netplay.createPeerConnection = (id) => {
+    assert.equal(id, 'guest');
+    created++;
+  };
+  await app.start();
+  const audio = audioContext();
+  app.emu.Module = { AL: { currentCtx: { audioCtx: audio.context, sources: [{ gain: audio.makeSource() }] } } };
+  await app.tick();
+  await app.tick();
+  assert.deepEqual(tracks, [audio.track]);
+  assert.equal(closed, 1);
+  assert.equal(created, 1);
+});
