@@ -15,6 +15,7 @@ const {
   findMatchingGame
 } = require('./src/netplay-library');
 const {
+  certificateFingerprintFromData,
   certificateMatches,
   decodeInvite,
   encodeInvite,
@@ -147,9 +148,11 @@ function addTrustedCertificate(hostname, fingerprint) {
   trustedNetplayCertificates.get(hostname).add(normalized);
 }
 
-function certificateIsTrusted(hostname, fingerprint) {
+function certificateIsTrusted(hostname, certificate) {
   const trusted = trustedNetplayCertificates.get(hostname);
-  return Boolean(trusted && [...trusted].some((expected) => certificateMatches(expected, fingerprint)));
+  const fingerprint = certificateFingerprintFromData(certificate?.data);
+  return Boolean(trusted && fingerprint
+    && [...trusted].some((expected) => certificateMatches(expected, fingerprint)));
 }
 
 function localIpv4Addresses() {
@@ -820,7 +823,7 @@ app.whenReady().then(async () => {
     return allowedPlayerPermissions.has(permission) && trustedOrigin;
   });
   session.defaultSession.setCertificateVerifyProc((request, callback) => {
-    callback(certificateIsTrusted(request.hostname, request.certificate?.fingerprint) ? 0 : -3);
+    callback(certificateIsTrusted(request.hostname, request.certificate) ? 0 : -3);
   });
   createWindow();
   const initialInvitation = invitationFromArguments(process.argv);

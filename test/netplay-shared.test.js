@@ -2,8 +2,11 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { X509Certificate } = require('node:crypto');
+const { generateCertificate } = require('../src/netplay-server');
 const {
   MAX_INVITE_LENGTH,
+  certificateFingerprintFromData,
   certificateMatches,
   decodeInvite,
   encodeInvite,
@@ -72,6 +75,17 @@ test('normalizes and compares pinned LAN certificate fingerprints', () => {
   assert.equal(certificateMatches(fingerprint, colonFingerprint), true);
   assert.equal(certificateMatches(fingerprint, 'cd'.repeat(32)), false);
   assert.equal(certificateMatches('not-a-certificate', fingerprint), false);
+});
+
+test('derives the pinned SHA-256 fingerprint from Electron certificate PEM data', () => {
+  const credentials = generateCertificate();
+  const expected = new X509Certificate(credentials.cert).fingerprint256.replaceAll(':', '').toLowerCase();
+  const electronFingerprint = `sha256/${Buffer.from(expected, 'hex').toString('base64')}`;
+
+  assert.equal(certificateMatches(expected, electronFingerprint), false);
+  assert.equal(certificateFingerprintFromData(credentials.cert), expected);
+  assert.equal(certificateMatches(expected, certificateFingerprintFromData(credentials.cert)), true);
+  assert.equal(certificateFingerprintFromData('not a certificate'), '');
 });
 
 test('generates a player CSP containing only the selected signaling origin', () => {

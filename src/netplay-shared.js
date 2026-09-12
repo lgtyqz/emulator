@@ -1,5 +1,7 @@
 'use strict';
 
+const { X509Certificate } = require('node:crypto');
+
 const INVITE_PREFIX = 'RR1.';
 const INVITE_VERSION = 1;
 const MAX_INVITE_LENGTH = 8192;
@@ -30,6 +32,15 @@ function certificateMatches(expected, actual) {
   const expectedFingerprint = normalizeFingerprint(expected);
   return FINGERPRINT_PATTERN.test(expectedFingerprint)
     && expectedFingerprint === normalizeFingerprint(actual);
+}
+
+function certificateFingerprintFromData(data) {
+  if (typeof data !== 'string' || data.length > 64 * 1024) return '';
+  try {
+    return normalizeFingerprint(new X509Certificate(data).fingerprint256);
+  } catch {
+    return '';
+  }
 }
 
 function validateServerUrl(value) {
@@ -177,6 +188,7 @@ module.exports = {
   INVITE_PREFIX,
   INVITE_VERSION,
   MAX_INVITE_LENGTH,
+  certificateFingerprintFromData,
   certificateMatches,
   decodeInvite,
   encodeInvite,
